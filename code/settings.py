@@ -1,13 +1,14 @@
 # settings.py
 import pygame
 
-# --- 遊戲視窗與常數 ---
+
+# 遊戲視窗與常數
 TILE_SIZE = 20
 SCREEN_WIDTH = 28 * TILE_SIZE
 SCREEN_HEIGHT = 36 * TILE_SIZE
 FRIGHTENED_DURATION = 7000 # 7 秒
 
-# --- 顏色定義 ---
+# 顏色定義
 BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
 WHITE = (255, 255, 255)
@@ -19,12 +20,19 @@ ORANGE = (255, 184, 82)
 GREY = (150, 150, 150)
 FRIGHTENED_BLUE = (0, 0, 139)
 
-# --- 分數資料 ---
+# 字型設定
+# 初始化字型模組
+pygame.font.init()
+SCORE_FONT = pygame.font.Font(None, 24)
+GAME_OVER_FONT = pygame.font.Font(None, 64)
+WIN_FONT = pygame.font.Font(None, 64)
+
+# 分數資料 
 PELLELETS_POINT = 10
 POWER_PELLET_POINT = 50
 GHOST_POINT = 200
 
-# --- 地圖資料 (Layout) ---
+# 地圖資料 (Layout) 
 MAP_STRINGS = [
     "WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
     "W............WW............W",
