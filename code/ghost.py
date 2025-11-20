@@ -5,7 +5,7 @@ import math
 from settings import *
 
 class Ghost:
-    def __init__(self, grid_x, grid_y, color, ai_mode="RANDOM", scatter_target=(0, 0)):
+    def __init__(self, grid_x, grid_y, color, ai_mode="RANDOM", scatter_target=(0, 0), in_house=False):
         self.grid_x = grid_x
         self.grid_y = grid_y
         self.home_pos = (grid_x, grid_y)
@@ -21,7 +21,7 @@ class Ghost:
         self.all_directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
         
         self.ai_mode = ai_mode
-        self.current_ai_mode = ai_mode
+        self.current_ai_mode = "EXIT_HOUSE" if in_house else ai_mode
         self.target = (0, 0)
         self.scatter_target = scatter_target
         
@@ -50,12 +50,13 @@ class Ghost:
         self.target = self.home_pos 
 
     def respawn(self):
-        print("一隻鬼重生了！")
+        print("一隻鬼重生了！準備出門")
         self.is_eaten = False
-        self.current_ai_mode = self.ai_mode
+        self.current_ai_mode = "EXIT_HOUSE"
         self.speed = self.default_speed
         self.pixel_x = (self.home_pos[0] * TILE_SIZE) + (TILE_SIZE // 2)
         self.pixel_y = (self.home_pos[1] * TILE_SIZE) + (TILE_SIZE // 2)
+        self.direction = (0, -1)    # 重生時往上看，避免卡住
 
     def start_frightened(self):
         if not self.is_eaten:
@@ -78,19 +79,30 @@ class Ghost:
         reverse_dir = (self.direction[0] * -1, self.direction[1] * -1)
         
         for move_dir in self.all_directions:
+            # 某些模式下不能回頭
             is_chase_or_random = (self.current_ai_mode.startswith("CHASE_") or self.current_ai_mode == "RANDOM")
             if is_chase_or_random and move_dir == reverse_dir:
                 continue
 
             next_g_x = self.grid_x + move_dir[0]
             next_g_y = self.grid_y + move_dir[1]
+
             if 0 <= next_g_y < len(game_map) and 0 <= next_g_x < len(game_map[0]):
-                if game_map[next_g_y][next_g_x] != "W":
-                    valid_moves.append(move_dir)
+                tile = game_map[next_g_y][next_g_x]
+                
+                # 門的通行邏輯
+                if tile == "W":
+                    continue # 牆壁不能過
+                elif tile == "=":
+                    # 只有出門或回家(死掉)模式可以過門
+                    if self.current_ai_mode not in ["EXIT_HOUSE", "GO_HOME"]:
+                        continue
+                
+                # 如果通過上述檢查，則為合法方向
+                valid_moves.append(move_dir)
                     
         if not valid_moves:
-            if game_map[self.grid_y + reverse_dir[1]][self.grid_x + reverse_dir[0]] != "W":
-                valid_moves.append(reverse_dir)
+            valid_moves.append(reverse_dir)
 
         return valid_moves
 
@@ -104,7 +116,13 @@ class Ghost:
 
             if self.current_ai_mode == "GO_HOME" and (self.grid_x, self.grid_y) == self.home_pos:
                 self.respawn()
-                
+
+            if self.current_ai_mode == "EXIT_HOUSE":
+                # 如果 Y 座標小於等於 11 (門在 12)，代表已經出去了
+                if self.grid_y <= 11:
+                    self.current_ai_mode = self.ai_mode # 切換回正常追蹤模式
+                    self.direction = random.choice([(-1, 0), (1, 0)])    #隨機往左往右
+
             valid_directions = self.get_valid_directions(game_map)
 
             player_dir_x = player.direction[0]
@@ -113,7 +131,7 @@ class Ghost:
             
             self.target = (player.grid_x, player.grid_y)
             
-            if self.current_ai_mode == "RANDOM": self.target = None 
+            if self.current_ai_mode == "EXIT_HOUSE": self.target = (13.5, 10) 
             elif self.current_ai_mode == "FRIGHTENED": self.target = (player.grid_x, player.grid_y)
             elif self.current_ai_mode == "GO_HOME": self.target = self.home_pos
             elif self.current_ai_mode == "CHASE_BLINKY": self.target = (player.grid_x, player.grid_y)
@@ -133,10 +151,8 @@ class Ghost:
                     vec_x = trigger_x - blinky_x; vec_y = trigger_y - blinky_y
                     self.target = (trigger_x + vec_x, trigger_y + vec_y)
 
-            if self.current_ai_mode == "RANDOM":
-                if valid_directions: self.direction = random.choice(valid_directions)
-            
-            elif self.target and valid_directions:
+        
+            if self.target and valid_directions:
                 best_direction = (0, 0)
                 if self.current_ai_mode == "FRIGHTENED":
                     best_distance = float('-inf')

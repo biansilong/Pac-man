@@ -14,7 +14,7 @@ class Player:
         self.next_direction = (0, 0)
         self.score = 0
 
-    def draw(self, surface):    #先畫一個黃色圓形當小精靈
+    def draw(self, surface):    # 先畫一個黃色圓形當小精靈
         pygame.draw.circle(surface, YELLOW, (self.pixel_x, self.pixel_y), self.radius)
 
     def handle_input(self, event):
@@ -27,7 +27,7 @@ class Player:
     def update(self, game_map):
         """ 更新玩家狀態。返回 'ATE_PELLET', 'ATE_POWER_PELLET', 或 None """
         
-        # 1. 檢查是否在格子中心 (分開檢查 X 和 Y)
+        # 檢查是否在格子中心 (分開檢查 X 和 Y)
         dist_x = abs((self.pixel_x - (TILE_SIZE // 2)) % TILE_SIZE)
         dist_y = abs((self.pixel_y - (TILE_SIZE // 2)) % TILE_SIZE)
         
@@ -40,7 +40,7 @@ class Player:
         self.grid_x = curr_grid_x
         self.grid_y = curr_grid_y
 
-        # --- 2. 吃豆子邏輯 ---
+        # 吃豆子邏輯 
         # 加入邊界檢查，防止吃豆子時也報錯
         if 0 <= curr_grid_y < len(game_map) and 0 <= curr_grid_x < len(game_map[0]):
             current_tile = game_map[curr_grid_y][curr_grid_x]
@@ -51,21 +51,21 @@ class Player:
                 game_map[curr_grid_y][curr_grid_x] = " "
                 return "ATE_POWER_PELLET"
 
-        # --- 3. 轉彎邏輯 (分軸檢查) ---
+        # 牆壁判別
+        def is_wall(gx, gy):
+            if 0 <= gy < len(game_map) and 0 <= gx < len(game_map[0]):
+                tile = game_map[gy][gx]
+                return tile == "W" or tile == "=" # <--- 修改這裡
+            return False
+
+        # 轉彎邏輯 (分軸檢查) 
         if self.next_direction != (0, 0):
             # 水平轉彎 (左/右)
             if self.next_direction[1] == 0: 
                 if is_centered_y:
-                    next_g_x = curr_grid_x + self.next_direction[0]
-                    next_g_y = curr_grid_y
-                    # 修正：檢查邊界，如果在範圍內才檢查牆壁；範圍外(隧道)允許轉彎
-                    if 0 <= next_g_y < len(game_map) and 0 <= next_g_x < len(game_map[0]):
-                        if game_map[next_g_y][next_g_x] != "W":
-                            self.direction = self.next_direction
-                            self.next_direction = (0, 0)
-                            self.pixel_y = (curr_grid_y * TILE_SIZE) + (TILE_SIZE // 2)
-                    else:
-                        # 隧道入口，允許轉彎進入
+                    next_grid_x = curr_grid_x + self.next_direction[0]
+                    # 檢查邊界，如果在範圍內才檢查牆壁；範圍外(隧道)允許轉彎
+                    if not is_wall(next_grid_x,curr_grid_y):
                         self.direction = self.next_direction
                         self.next_direction = (0, 0)
                         self.pixel_y = (curr_grid_y * TILE_SIZE) + (TILE_SIZE // 2)
@@ -73,36 +73,34 @@ class Player:
             # 垂直轉彎 (上/下)
             elif self.next_direction[0] == 0:
                 if is_centered_x:
-                    next_g_x = curr_grid_x
-                    next_g_y = curr_grid_y + self.next_direction[1]
-                    # 修正：檢查邊界
-                    if 0 <= next_g_y < len(game_map) and 0 <= next_g_x < len(game_map[0]):
-                        if game_map[next_g_y][next_g_x] != "W":
-                            self.direction = self.next_direction
-                            self.next_direction = (0, 0)
-                            self.pixel_x = (curr_grid_x * TILE_SIZE) + (TILE_SIZE // 2)
+                    next_grid_y = curr_grid_y + self.next_direction[1]
+                    # 檢查邊界
+                    if not is_wall(curr_grid_x,next_grid_y):
+                        self.direction = self.next_direction
+                        self.next_direction = (0, 0)
+                        self.pixel_x = (curr_grid_x * TILE_SIZE) + (TILE_SIZE // 2)
 
-        # --- 4. 移動與撞牆檢查 (分軸檢查 + 邊界保護) ---
+        # 移動與撞牆檢查 (分軸檢查 + 邊界保護) 
         can_move = True
         
         # 如果正在水平移動 (左/右)
         if self.direction[1] == 0 and self.direction[0] != 0:
             if is_centered_x: 
-                next_g_x = curr_grid_x + self.direction[0]
-                # [重要修正] 只有當 next_g_x 在地圖範圍內時，才檢查是不是牆壁
+                next_grid_x = curr_grid_x + self.direction[0]
+                # 只有當 next_g_x 在地圖範圍內時，才檢查是不是牆壁
                 # 如果超出範圍 (例如 -1 或 29)，代表正在進隧道，我們允許移動 (不設 can_move = False)
-                if 0 <= next_g_x < len(game_map[0]):
-                    if game_map[curr_grid_y][next_g_x] == "W":
+                if 0 <= next_grid_x < len(game_map[0]):
+                    if is_wall(next_grid_x, curr_grid_y):
                         can_move = False
                         self.pixel_x = (curr_grid_x * TILE_SIZE) + (TILE_SIZE // 2)
 
         # 如果正在垂直移動 (上/下)
         elif self.direction[0] == 0 and self.direction[1] != 0:
             if is_centered_y: 
-                next_g_y = curr_grid_y + self.direction[1]
-                # [重要修正] 只有當 next_g_y 在地圖範圍內時，才檢查是不是牆壁
-                if 0 <= next_g_y < len(game_map):
-                    if game_map[next_g_y][curr_grid_x] == "W":
+                next_grid_y = curr_grid_y + self.direction[1]
+                # 只有當 next_g_y 在地圖範圍內時，才檢查是不是牆壁
+                if 0 <= next_grid_y < len(game_map):
+                    if is_wall(curr_grid_x, next_grid_y):
                         can_move = False
                         self.pixel_y = (curr_grid_y * TILE_SIZE) + (TILE_SIZE // 2)
 
@@ -110,10 +108,8 @@ class Player:
             self.pixel_x += self.direction[0] * self.speed
             self.pixel_y += self.direction[1] * self.speed
 
-        # 5. 隧道處理 (超出邊界後瞬間移動到另一邊)
-        if self.pixel_x < -TILE_SIZE//2: 
-            self.pixel_x = SCREEN_WIDTH + TILE_SIZE//2
-        elif self.pixel_x > SCREEN_WIDTH + TILE_SIZE//2: 
-            self.pixel_x = -TILE_SIZE//2
+        # 隧道處理 (超出邊界後瞬間移動到另一邊)
+        if self.pixel_x < -TILE_SIZE//2: self.pixel_x = SCREEN_WIDTH + TILE_SIZE//2
+        elif self.pixel_x > SCREEN_WIDTH + TILE_SIZE//2: self.pixel_x = -TILE_SIZE//2
         
         return None

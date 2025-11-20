@@ -16,6 +16,7 @@ RED = (255, 0, 0)
 PINK = (255, 184, 255)  
 CYAN = (0, 255, 255)    
 ORANGE = (255, 184, 82)
+GREY = (150, 150, 150)
 FRIGHTENED_BLUE = (0, 0, 139)
 
 # --- 分數資料 ---
@@ -37,7 +38,7 @@ MAP_STRINGS = [
     "WWWWWW.WWWWW WW WWWWW.WWWWWW",
     "     W.WWWWW WW WWWWW.W     ",
     "     W.WW          WW.W     ",
-    "     W.WW WWW  WWW WW.W     ",
+    "     W.WW WWW==WWW WW.W     ",     # <--- 加入門 '='
     "WWWWWW.WW W      W WW.WWWWWW",
     "      .   W      W   .      ",
     "WWWWWW.WW W      W WW.WWWWWW",
