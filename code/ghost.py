@@ -5,7 +5,7 @@ import math
 from settings import *
 
 class Ghost:
-    def __init__(self, grid_x, grid_y, color, ai_mode="RANDOM", scatter_target=(0, 0), in_house=False,delay=0):
+    def __init__(self, grid_x, grid_y, color, ai_mode, scatter_target=(0, 0), in_house=False,delay=0):
         self.grid_x = grid_x
         self.grid_y = grid_y
         self.home_pos = (grid_x, grid_y)
@@ -108,8 +108,8 @@ class Ghost:
         
         for move_dir in self.all_directions:
             # 某些模式下不能回頭
-            is_chase_or_random = (self.current_ai_mode.startswith("CHASE_") or self.current_ai_mode == "GO_HOME")
-            if is_chase_or_random and move_dir == reverse_dir:
+            is_chase_or_GO_HOME = (self.current_ai_mode.startswith("CHASE_") or self.current_ai_mode == "GO_HOME")
+            if is_chase_or_GO_HOME and move_dir == reverse_dir:
                 continue
 
             next_g_x = int(self.grid_x + move_dir[0])
