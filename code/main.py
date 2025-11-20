@@ -36,10 +36,10 @@ def draw_map():
 player = Player(13.5, 23)
 
 # 建立四隻鬼，設定不同的顏色與 AI 模式、等待時間
-blinky = Ghost(13, 14, RED, ai_mode="CHASE_BLINKY", scatter_target=(26, 1), in_house=True, initial_delay=0)
-pinky = Ghost(14, 14, PINK, ai_mode="CHASE_PINKY", scatter_target=(1, 1), in_house=True, initial_delay=3000)
-inky = Ghost(12, 14, CYAN, ai_mode="CHASE_INKY", scatter_target=(26, 29), in_house=True, initial_delay=6000)
-clyde = Ghost(15, 14, ORANGE, ai_mode="CHASE_CLYDE", scatter_target=(1, 29), in_house=True, initial_delay=9000)
+blinky = Ghost(13, 14, RED, ai_mode="CHASE_BLINKY", scatter_target=(26, 1), in_house=True, delay=0)
+pinky = Ghost(14, 14, PINK, ai_mode="CHASE_PINKY", scatter_target=(1, 1), in_house=True, delay=3000)
+inky = Ghost(12, 14, CYAN, ai_mode="CHASE_INKY", scatter_target=(26, 29), in_house=True, delay=6000)
+clyde = Ghost(15, 14, ORANGE, ai_mode="CHASE_CLYDE", scatter_target=(1, 29), in_house=True, delay=9000)
 
 
 ghosts = [blinky, pinky, inky, clyde]
@@ -60,7 +60,8 @@ frightened_start_time = 0
 
 # * 主迴圈開始
 while running:
-    # A. 處理輸入 
+    dt = clock.tick(60)
+    # 處理輸入 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -99,7 +100,7 @@ while running:
         # 鬼的更新 (Inky 需要 Blinky 的位置來計算夾擊)
         blinky_pos_for_inky = (blinky.grid_x, blinky.grid_y)
         for ghost in ghosts:
-            ghost.update(GAME_MAP, player, ghosts, blinky_pos_for_inky) 
+            ghost.update(GAME_MAP, player, ghosts, dt, blinky_pos_for_inky) 
         
         # 碰撞偵測
         for ghost in ghosts:

@@ -5,7 +5,7 @@ import math
 from settings import *
 
 class Ghost:
-    def __init__(self, grid_x, grid_y, color, ai_mode="RANDOM", scatter_target=(0, 0), in_house=False,initial_delay=0):
+    def __init__(self, grid_x, grid_y, color, ai_mode="RANDOM", scatter_target=(0, 0), in_house=False,delay=0):
         self.grid_x = grid_x
         self.grid_y = grid_y
         self.home_pos = (grid_x, grid_y)
@@ -22,12 +22,10 @@ class Ghost:
         
         self.ai_mode = ai_mode
 
-        self.initial_delay = initial_delay
-        self.spawn_time = 0
-        self.start_time_recorded = False
+        self.delay = delay
 
         if in_house:
-            if self.initial_delay > 0:
+            if self.delay > 0:
                 self.current_ai_mode = "WAITING"
                 self.direction = (0, -0.5) # 等待時稍微上下浮動的初始速度
             else:
@@ -73,12 +71,15 @@ class Ghost:
         self.direction = (0, -1)    # 重生時往上看，避免卡住
 
     def start_frightened(self):
-        if  self.is_eaten or self.current_ai_mode in ["GO_HOME", "EXIT_HOUSE", "WAITING"]:
+        if  self.is_eaten:
             return
+        # 不管位置 一律變成驚嚇狀態
         self.is_frightened = True
-        self.current_ai_mode = "FRIGHTENED"
-        self.speed = 1
-        self.direction = (self.direction[0] * -1, self.direction[1] * -1)
+        #但是在家的AI模式不變
+        if self.current_ai_mode not in ["GO_HOME", "EXIT_HOUSE", "WAITING"]:
+            self.current_ai_mode = "FRIGHTENED"
+            self.speed = 1
+            self.direction = (self.direction[0] * -1, self.direction[1] * -1)
 
     def end_frightened(self):
         if self.is_frightened:
@@ -134,15 +135,25 @@ class Ghost:
 
         return valid_moves
 
-    def update(self, game_map, player, all_ghosts, blinky_tile=None):
+    def update(self, game_map, player, all_ghosts, dt, blinky_tile=None):
         # 處理 WAITING 狀態
         if self.current_ai_mode == "WAITING":
-            if not self.start_time_recorded:
-                self.spawn_time = pygame.time.get_ticks()
-                self.start_time_recorded = True
+            # 如果現在是驚嚇模式，就暫停倒數，直接 return 
+            # 因為我們在 start_frightened 裡有設定 "就算在家也會變 is_frightened=True"
+            if self.is_frightened:
+                # 選擇讓它繼續 bounce，但不扣時間
+                home_pixel_y = (self.home_pos[1] * TILE_SIZE) + (TILE_SIZE // 2)
+                limit = 5
+                self.pixel_y += self.direction[1]
+                if self.pixel_y > home_pixel_y + limit:
+                    self.direction = (0, -0.5)
+                elif self.pixel_y < home_pixel_y - limit:
+                    self.direction = (0, 0.5)
+                return
             
+            self.delay -= dt
             # 檢查時間是否到了
-            if pygame.time.get_ticks() - self.spawn_time > self.initial_delay:
+            if self.delay <= 0:
                 self.current_ai_mode = "EXIT_HOUSE"
                 self.direction = (0, -1) # 往上衝
                 # 修正位置到格子中心，確保出門路徑準確
@@ -162,6 +173,7 @@ class Ghost:
             
             # WAITING 狀態不執行後面的移動邏輯
             return
+        
         # 正常的移動狀態
         is_centered_x = (self.pixel_x - (TILE_SIZE // 2)) % TILE_SIZE == 0
         is_centered_y = (self.pixel_y - (TILE_SIZE // 2)) % TILE_SIZE == 0
