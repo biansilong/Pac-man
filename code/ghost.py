@@ -107,13 +107,14 @@ class Ghost:
     def get_distance(self, pos1, pos2):
         return math.hypot(pos1[0] - pos2[0], pos1[1] - pos2[1])
 
+    #找出所有合法的下一步
     def get_valid_directions(self, game_map, others):
         valid_moves = []
         reverse_dir = (self.direction[0] * -1, self.direction[1] * -1)
         
         for move_dir in self.all_directions:
             # 某些模式下不能回頭
-            no_rev = (self.current_ai_mode is not "WAITING" )
+            no_rev = (self.current_ai_mode != "WAITING" )
             if no_rev and move_dir == reverse_dir:
                 continue
 
@@ -241,7 +242,7 @@ class Ghost:
             if self.current_ai_mode == "EXIT_HOUSE": self.target = (13.5, 10) 
             elif self.current_ai_mode == "FRIGHTENED": self.target = (player.grid_x, player.grid_y)
             elif self.current_ai_mode == "GO_HOME": self.target = self.home_pos
-            # 新增散開模式
+            # 散開模式
             elif self.current_ai_mode == "SCATTER":
                 current_target_point = self.scatter_path[self.scatter_index]
                 # 檢查是否抵達當前路徑點
@@ -259,7 +260,7 @@ class Ghost:
                             print(f"{self.color} 繞行結束，開始追逐！")
                 
                 self.target = self.scatter_path[self.scatter_index]
-            # 四個鬼的獨立AI
+            # 四個鬼的獨立AI模式
             # PINKY 追著玩家
             elif self.current_ai_mode == "CHASE_BLINKY": self.target = (player.grid_x, player.grid_y)
             # BLINKY 預測玩家未來的位置 追那裡
@@ -282,7 +283,7 @@ class Ghost:
                     vec_x = trigger_x - blinky_x; vec_y = trigger_y - blinky_y
                     self.target = (trigger_x + vec_x, trigger_y + vec_y)
 
-        
+            # 走遍他所能允許的方向
             if self.target and valid_directions:
                 best_direction = (0, 0)
                 if self.current_ai_mode == "FRIGHTENED":
@@ -295,9 +296,11 @@ class Ghost:
                     next_g_y = self.grid_y + direction[1]
                     dist = self.get_distance((next_g_x, next_g_y), self.target)
                     
+                    # 驚嚇模式 要選擇能有多遠就多遠
                     if self.current_ai_mode == "FRIGHTENED":
                         if dist > best_distance:
                             best_distance = dist; best_direction = direction
+                    # 追逐模式 要選擇能有多近就多近
                     else:
                         if dist < best_distance:
                             best_distance = dist; best_direction = direction
