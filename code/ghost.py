@@ -60,6 +60,17 @@ class Ghost:
         self.current_ai_mode = "GO_HOME"
         self.speed = 2*SPEED 
         self.target = self.home_pos 
+        center_offset = TILE_SIZE // 2
+        
+        # 校正 X 軸：確保距離中心點的位移量能被新速度整除
+        remainder_x = (self.pixel_x - center_offset) % self.speed
+        if remainder_x != 0:
+            self.pixel_x -= remainder_x
+
+        # 校正 Y 軸
+        remainder_y = (self.pixel_y - center_offset) % self.speed
+        if remainder_y != 0:
+            self.pixel_y -= remainder_y
 
     def respawn(self):
         print("一隻鬼重生了！準備出門")
