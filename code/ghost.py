@@ -104,6 +104,8 @@ class Ghost:
                 self.current_ai_mode = self.ai_mode
             #self.speed = self.default_speed
 
+    # ! 這版演算法只是單純的計算絕對距離 沒有算路徑長 所以可能繞遠路
+    # ? 要試試看BFS嗎 還是A*
     def get_distance(self, pos1, pos2):
         return math.hypot(pos1[0] - pos2[0], pos1[1] - pos2[1])
 
@@ -266,19 +268,26 @@ class Ghost:
                             print(f"{self.color} 繞行結束，開始追逐！")
                 
                 self.target = self.scatter_path[self.scatter_index]
-            # 四個鬼的獨立AI模式
+
+            # *四個鬼的獨立AI模式
+
             # PINKY 追著玩家
             elif self.current_ai_mode == AI_CHASE_BLINKY: self.target = (player.grid_x, player.grid_y)
+
             # BLINKY 預測玩家未來的位置 追那裡
-            #? 如果超出、是牆壁的話要怎麼追
+            # 如果超出、是牆壁的話要怎麼追S
+            # 如果目標在牆壁裡：Pinky 會試圖走到牆壁的「隔壁」，也就是地圖上最靠近那個牆壁點的可通行位置。
+            # 如果目標在地圖外：Pinky 會試圖走到地圖的邊緣，貼著邊界看著那個遙遠的目標
             elif self.current_ai_mode == AI_CHASE_PINKY:
                 if player_stopped: self.target = (player.grid_x, player.grid_y)
                 else: self.target = (player.grid_x + (player_dir_x * 4), player.grid_y + (player_dir_y * 4))
+
             # CLYDE 裝忙 快追到就跑
             elif self.current_ai_mode == AI_CHASE_CLYDE:
                 distance = self.get_distance((self.grid_x, self.grid_y), (player.grid_x, player.grid_y))
                 if distance > 8: self.target = (player.grid_x, player.grid_y)
                 else: self.target = self.scatter_path[0]
+
             # INKY 由blinky和玩家的位置決定要怎麼追
             elif self.current_ai_mode == AI_CHASE_INKY:
                 if blinky_tile is None or player_stopped: self.target = (player.grid_x, player.grid_y)
