@@ -13,11 +13,6 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Pygame Pac-Man")
 clock = pygame.time.Clock()
 
-# 字型設定
-SCORE_FONT = pygame.font.Font(None, 24)
-GAME_OVER_FONT = pygame.font.Font(None, 64)
-WIN_FONT = pygame.font.Font(None, 64)
-
 # 繪製地圖的函式
 def draw_map():
     for y, row in enumerate(GAME_MAP):
@@ -41,10 +36,11 @@ def draw_map():
 player = Player(13.5, 23)
 
 # 建立四隻鬼，設定不同的顏色與 AI 模式、等待時間
-blinky = Ghost(13, 14, RED, ai_mode="CHASE_BLINKY", scatter_target=(26, 1), in_house=True)
-pinky = Ghost(14, 14, PINK, ai_mode="CHASE_PINKY", scatter_target=(1, 1), in_house=True)
-inky = Ghost(12, 14, CYAN, ai_mode="CHASE_INKY", scatter_target=(26, 29), in_house=True)
-clyde = Ghost(15, 14, ORANGE, ai_mode="CHASE_CLYDE", scatter_target=(1, 29), in_house=True)
+blinky = Ghost(13, 14, RED, ai_mode="CHASE_BLINKY", scatter_target=(26, 1), in_house=True, initial_delay=0)
+pinky = Ghost(14, 14, PINK, ai_mode="CHASE_PINKY", scatter_target=(1, 1), in_house=True, initial_delay=3000)
+inky = Ghost(12, 14, CYAN, ai_mode="CHASE_INKY", scatter_target=(26, 29), in_house=True, initial_delay=6000)
+clyde = Ghost(15, 14, ORANGE, ai_mode="CHASE_CLYDE", scatter_target=(1, 29), in_house=True, initial_delay=9000)
+
 
 ghosts = [blinky, pinky, inky, clyde]
 
@@ -61,7 +57,6 @@ running = True
 game_state = "PLAYING"  # "PLAYING", "GAME_OVER", "WIN"
 frightened_mode = False
 frightened_start_time = 0
-
 
 # * 主迴圈開始
 while running:
@@ -104,7 +99,7 @@ while running:
         # 鬼的更新 (Inky 需要 Blinky 的位置來計算夾擊)
         blinky_pos_for_inky = (blinky.grid_x, blinky.grid_y)
         for ghost in ghosts:
-            ghost.update(GAME_MAP, player, blinky_pos_for_inky) 
+            ghost.update(GAME_MAP, player, ghosts, blinky_pos_for_inky) 
         
         # 碰撞偵測
         for ghost in ghosts:
