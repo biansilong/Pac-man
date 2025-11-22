@@ -76,44 +76,15 @@ TILE_EMPTY = " "
 EVENT_ATE_PELLET = "ATE_PELLET"
 EVENT_ATE_POWER_PELLET = "ATE_POWER_PELLET"
 
-# 地圖資料 (Layout) 
-MAP_STRINGS = [
-    "WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-    "W............WW............W",
-    "W.WWWW.WWWWW.WW.WWWWW.WWWW.W",
-    "WOWWWW.WWWWW.WW.WWWWW.WWWWOW",
-    "W.WWWW.WWWWW.WW.WWWWW.WWWW.W",
-    "W..........................W",
-    "W.WWWW.WW.WWWWWWWW.WWWW.WW.W",
-    "W.WWWW.WW.WWWWWWWW.WWWW.WW.W",
-    "W......WW....WW....WW......W",
-    "WWWWWW.WWWWW WW WWWWW.WWWWWW",
-    "     W.WWWWW WW WWWWW.W     ",
-    "     W.WW          WW.W     ",
-    "     W.WW WWW==WWW WW.W     ",     # <--- 加入門 '='
-    "WWWWWW.WW W      W WW.WWWWWW",
-    "      .   W      W   .      ",
-    "WWWWWW.WW W      W WW.WWWWWW",
-    "     W.WW WWWWWWWW WW.W     ",
-    "     W.WW          WW.W     ",
-    "     W.WW WWWWWWWW WW.W     ",
-    "WWWWWW.WW WWWWWWWW WW.WWWWWW",
-    "W............WW............W",
-    "W.WWWW.WWWWW.WW.WWWWW.WWWW.W",
-    "W.WWWW.WWWWW.WW.WWWWW.WWWW.W",
-    "WO..WW.......  .......WW..OW",
-    "WWW.WW.WW.WWWWWWWW.WW.WW.WWW",
-    "WWW.WW.WW.WWWWWWWW.WW.WW.WWW",
-    "W......WW....WW....WW......W",
-    "W.WWWW.WWWWW.WW.WWWWW.WWWW.W",
-    "W.WWWW.WWWWW.WW.WWWWW.WWWW.W",
-    "W..........................W",
-    "WWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-    " ", " ", " ", " ", " "
-]
-
 # 將字串地圖轉換成可修改的列表 (List)
-GAME_MAP = [list(row) for row in MAP_STRINGS]
+# 我們先給一個空的預設值，實際內容會由 map_generator 填入
+# 這是一個 36列 x 28行的空陣列
+GAME_MAP = [[TILE_EMPTY for _ in range(28)] for _ in range(36)]
+
+# 地圖生成參數
+MAP_COLS = 28
+MAP_ROWS = 31  # 遊戲主要區域高度 (不含下方的 Log padding)
+
 
 def is_wall(game_map, x, y):
     """

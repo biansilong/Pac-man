@@ -5,10 +5,11 @@ import math
 from settings import *
 
 class Ghost:
-    def __init__(self, grid_x, grid_y, color, ai_mode, scatter_point=None, in_house=False,delay=0, on_log=None):
+    def __init__(self, grid_x, grid_y, color, ai_mode, scatter_point=None, in_house=False,delay=0, on_log=None, door_row=12):
         self.grid_x = grid_x
         self.grid_y = grid_y
         self.home_pos = (grid_x, grid_y)
+        self.door_row = door_row  # 記住門的位置
         
         self.pixel_x = (self.grid_x * TILE_SIZE) + (TILE_SIZE // 2)
         self.pixel_y = (self.grid_y * TILE_SIZE) + (TILE_SIZE // 2)
@@ -232,8 +233,8 @@ class Ghost:
                 self.respawn()
 
             if self.current_ai_mode == MODE_EXIT_HOUSE :
-                # 如果 Y 座標小於等於 11 (門在 12)，代表已經出去了
-                if self.grid_y <= 11:
+                # 因為門在上面，所以只要 Y 座標小於等於 door_row，就算出門了 (進到門所在的那一列或更上面)
+                if self.grid_y <= self.door_row - 1:
                     self.current_ai_mode = self.ai_mode # 切換回正常追蹤模式
                     self.direction = random.choice([(-1, 0), (1, 0)])    #隨機往左往右
 
@@ -251,7 +252,8 @@ class Ghost:
             # *設定AI模式
             # 共通模式 離家 回家 驚嚇
             if self.current_ai_mode == MODE_EXIT_HOUSE :
-                self.target = (13.5, 10) 
+                # 目標設為門的上方空地 (door_row - 2)
+                self.target = (13.5, self.door_row - 2) 
             elif self.current_ai_mode == MODE_FRIGHTENED:
                 self.target = (player.grid_x, player.grid_y)
             elif self.current_ai_mode == MODE_GO_HOME:

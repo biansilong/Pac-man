@@ -3,6 +3,7 @@ import math
 from settings import * # 匯入所有設定 (顏色, 大小, 地圖)
 from player import Player    # 匯入 Player 類別
 from ghost import Ghost      # 匯入 Ghost 類別
+from map_generator import MapGenerator # 匯入生成器
 
 # 遊戲初始化
 pygame.init()
@@ -63,18 +64,25 @@ def reset_game():
     """ 重置遊戲所有狀態，回到初始畫面 """
     global player, ghosts, total_pellets, game_state, frightened_mode, global_ghost_mode, last_mode_switch_time, GAME_MAP, game_logs, frightened_start_time
 
-    # 1. 重置地圖 (必須重新從 settings.MAP_STRINGS 生成，因為原本的被吃掉了)
-    # 注意：這裡我們使用 [:] 來原地修改列表內容，確保傳參參照正確
-    GAME_MAP[:] = [list(row) for row in MAP_STRINGS]
+    # 生成新地圖
+    generator = MapGenerator()
+    new_map_strings, config = generator.generate()
+    GAME_MAP[:] = [list(row) for row in new_map_strings]
 
-    # 2. 重置玩家
-    player = Player(13.5, 23)
+    # 讀取配置
+    px, py = config["player_start"]
+    gx = int(config["house_center_x"])     
+    gy = int(config["ghost_spawn_y"])      
+    door_row = int(config["door_row"])
 
-    # 3. 重置鬼魂 (建立新的物件以重置位置和狀態)
-    blinky = Ghost(13, 14, RED, ai_mode=AI_CHASE_BLINKY, scatter_point=path_blinky, in_house=True, delay=0, on_log=log_message)
-    pinky = Ghost(14, 14, PINK, ai_mode=AI_CHASE_PINKY, scatter_point=path_pinky, in_house=True, delay=3000, on_log=log_message)
-    inky = Ghost(12, 14, CYAN, ai_mode=AI_CHASE_INKY, scatter_point=path_inky, in_house=True, delay=6000, on_log=log_message)
-    clyde = Ghost(15, 14, ORANGE, ai_mode=AI_CHASE_CLYDE, scatter_point=path_clyde, in_house=True, delay=9000, on_log=log_message)
+    # 重置玩家
+    player = Player(px, py)
+
+    # 重置鬼魂 (傳入 door_row)
+    blinky = Ghost(gx-1, gy, RED, ai_mode=AI_CHASE_BLINKY, scatter_point=path_blinky, in_house=True, delay=0, on_log=log_message, door_row=door_row)
+    pinky = Ghost(gx, gy, PINK, ai_mode=AI_CHASE_PINKY, scatter_point=path_pinky, in_house=True, delay=3000, on_log=log_message, door_row=door_row)
+    inky = Ghost(gx-2, gy, CYAN, ai_mode=AI_CHASE_INKY, scatter_point=path_inky, in_house=True, delay=6000, on_log=log_message, door_row=door_row)
+    clyde = Ghost(gx+1, gy, ORANGE, ai_mode=AI_CHASE_CLYDE, scatter_point=path_clyde, in_house=True, delay=9000, on_log=log_message, door_row=door_row)
     
     # 更新全域的 ghosts 列表
     ghosts[:] = [blinky, pinky, inky, clyde]
@@ -89,10 +97,8 @@ def reset_game():
     
     # 5. 寫入 Log
     log_message("=== Game Reset ===")
+    log_message(f"New Map! Door@{door_row}, Player@{int(py)}")
     log_message("Press ARROW KEYS to start...")
-
-# 建立遊戲物件(讓他置中)
-player = Player(13.5, 23)
 
 # 定義散開模式的巡邏點(Scatter Point)
 # 利用 "禁止迴轉" 機制，鬼魂到達角落後，會因為無法回頭而被迫繞行附近的牆壁。
@@ -109,11 +115,23 @@ path_inky = [(26, 29)]
 # Clyde (左下角): 繞行左下方的牆壁塊
 path_clyde = [(1, 29)]
 
-# 建立四隻鬼，設定不同的顏色與 AI 模式、等待時間
-blinky = Ghost(13, 14, RED, ai_mode=AI_CHASE_BLINKY, scatter_point=path_blinky, in_house=True, delay=0, on_log=log_message)
-pinky = Ghost(14, 14, PINK, ai_mode=AI_CHASE_PINKY, scatter_point=path_pinky, in_house=True, delay=3000, on_log=log_message)
-inky = Ghost(12, 14, CYAN, ai_mode=AI_CHASE_INKY, scatter_point=path_inky, in_house=True, delay=6000, on_log=log_message)
-clyde = Ghost(15, 14, ORANGE, ai_mode=AI_CHASE_CLYDE, scatter_point=path_clyde, in_house=True, delay=9000, on_log=log_message)
+# 第一次生成
+gen = MapGenerator()
+initial_map, config = gen.generate()
+GAME_MAP[:] = [list(row) for row in initial_map]
+
+start_px, start_py = config["player_start"]
+start_door_row = config["door_row"]
+start_gy = config["ghost_spawn_y"]
+start_gx = config["house_center_x"]
+
+# 建立玩家和四隻鬼，設定不同的顏色與 AI 模式、等待時間
+player = Player(start_px, start_py)
+
+blinky = Ghost(start_gx-1, start_gy, RED, ai_mode=AI_CHASE_BLINKY, scatter_point=path_blinky, in_house=True, delay=0, on_log=log_message, door_row=start_door_row)
+pinky = Ghost(start_gx, start_gy, PINK, ai_mode=AI_CHASE_PINKY, scatter_point=path_pinky, in_house=True, delay=3000, on_log=log_message, door_row=start_door_row)
+inky = Ghost(start_gx-2, start_gy, CYAN, ai_mode=AI_CHASE_INKY, scatter_point=path_inky, in_house=True, delay=6000, on_log=log_message, door_row=start_door_row)
+clyde = Ghost(start_gx+1, start_gy, ORANGE, ai_mode=AI_CHASE_CLYDE, scatter_point=path_clyde, in_house=True, delay=9000, on_log=log_message, door_row=start_door_row)
 
 
 ghosts = [blinky, pinky, inky, clyde]
