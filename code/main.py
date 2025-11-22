@@ -59,6 +59,38 @@ def draw_map():
                 center_y = rect_y + TILE_SIZE // 2
                 pygame.draw.circle(screen, WHITE, (center_x, center_y), 6)
 
+def reset_game():
+    """ 重置遊戲所有狀態，回到初始畫面 """
+    global player, ghosts, total_pellets, game_state, frightened_mode, global_ghost_mode, last_mode_switch_time, GAME_MAP, game_logs, frightened_start_time
+
+    # 1. 重置地圖 (必須重新從 settings.MAP_STRINGS 生成，因為原本的被吃掉了)
+    # 注意：這裡我們使用 [:] 來原地修改列表內容，確保傳參參照正確
+    GAME_MAP[:] = [list(row) for row in MAP_STRINGS]
+
+    # 2. 重置玩家
+    player = Player(13.5, 23)
+
+    # 3. 重置鬼魂 (建立新的物件以重置位置和狀態)
+    blinky = Ghost(13, 14, RED, ai_mode=AI_CHASE_BLINKY, scatter_path=path_blinky, in_house=True, delay=0, on_log=log_message)
+    pinky = Ghost(14, 14, PINK, ai_mode=AI_CHASE_PINKY, scatter_path=path_pinky, in_house=True, delay=3000, on_log=log_message)
+    inky = Ghost(12, 14, CYAN, ai_mode=AI_CHASE_INKY, scatter_path=path_inky, in_house=True, delay=6000, on_log=log_message)
+    clyde = Ghost(15, 14, ORANGE, ai_mode=AI_CHASE_CLYDE, scatter_path=path_clyde, in_house=True, delay=9000, on_log=log_message)
+    
+    # 更新全域的 ghosts 列表
+    ghosts[:] = [blinky, pinky, inky, clyde]
+
+    # 4. 重置遊戲變數
+    total_pellets = sum(row.count(TILE_PELLET) for row in GAME_MAP)
+    game_state = GAME_STATE_START
+    frightened_mode = False
+    frightened_start_time = 0
+    global_ghost_mode = MODE_SCATTER
+    last_mode_switch_time = 0
+    
+    # 5. 寫入 Log
+    log_message("=== Game Reset ===")
+    log_message("Press ARROW KEYS to start...")
+
 # 建立遊戲物件(讓他置中)
 player = Player(13.5, 23)
 
@@ -115,6 +147,10 @@ while running:
                     player.handle_input(event) # 讓第一下按鍵直接生效
         elif game_state == GAME_STATE_PLAYING:
             player.handle_input(event)
+        elif game_state in [GAME_STATE_GAME_OVER, GAME_STATE_WIN]:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:  # 按下 R 鍵
+                    reset_game()
 
     # 遊戲邏輯更新 
     if game_state == GAME_STATE_PLAYING:
@@ -225,11 +261,17 @@ while running:
         text = GAME_OVER_FONT.render("GAME OVER", True, RED)
         rect = text.get_rect(center=center_pos)
         screen.blit(text, rect)
-    
+        restart_text = SCORE_FONT.render("Press R to Restart", True, WHITE)
+        r_rect = restart_text.get_rect(center=(center_pos[0], center_pos[1] + 50))
+        screen.blit(restart_text, r_rect)
+
     elif game_state == GAME_STATE_WIN:
         text = WIN_FONT.render("YOU WIN!", True, YELLOW)
         rect = text.get_rect(center=center_pos)
         screen.blit(text, rect)
+        restart_text = SCORE_FONT.render("Press R to Play Again", True, WHITE)
+        r_rect = restart_text.get_rect(center=(center_pos[0], center_pos[1] + 50))
+        screen.blit(restart_text, r_rect)
 
     pygame.display.flip() 
 
