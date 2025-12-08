@@ -1,7 +1,8 @@
 # main.py
 import pygame
 import math
-from settings import * from player import Player
+from settings import * 
+from player import Player
 from ghost import Ghost
 
 # 遊戲初始化
