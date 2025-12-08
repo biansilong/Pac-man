@@ -218,8 +218,8 @@ class Ghost:
 
         return valid_moves
 
-   def update(self, game_map, player, all_ghosts, dt, global_ghost_mode, blinky_tile=None):
-        # 1. 狀態檢查與切換 (保持原樣)
+    def update(self, game_map, player, all_ghosts, dt, global_ghost_mode, blinky_tile=None):
+        # 1. 處理模式切換
         valid_to_switch = (self.current_ai_mode not in [MODE_GO_HOME, MODE_EXIT_HOUSE, MODE_WAITING]
                            and not self.is_frightened
                            and not self.is_eaten)
@@ -397,3 +397,5 @@ class Ghost:
             self.pixel_x = SCREEN_WIDTH + TILE_SIZE//2
         elif self.pixel_x > SCREEN_WIDTH + TILE_SIZE//2:
             self.pixel_x = -TILE_SIZE//2
+
+    
