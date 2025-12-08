@@ -128,7 +128,6 @@ class Ghost:
 
     # 2. BFS (廣度優先 - 新增) 
 
-
     def BFS(self, start, goal, game_map):
         queue = Queue()
         queue.put(start)
